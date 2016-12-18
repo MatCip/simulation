@@ -136,9 +136,36 @@ main (int argc, char *argv[])
                                  "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=30]"));
   mobilityM2MFixed.Install(ueNodesM2MFixed);
 
+
+
+
+
+
   //mobilità per gli H2H dinamici con random walk e posizione iniziale casuale
+  
   MobilityHelper mobilityH2H;
-  mobilityH2H.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
+    
+     //CIP
+     // impostazioni della mobility randomwaypoint, PositionAllocator crea problemi, in attesa di soluzione 
+
+    //Ptr<ListPositionAllocator> positionAlloc1 = CreateObject<ListPositionAllocator> ();
+    //positionAlloc1->Add (Vector (0, 0, 0));
+    // pos.Set ("X", 100);
+    // pos.Set ("Y", 100); 
+    // Ptr<PositionAllocator> taPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
+  
+    
+
+
+     // mobilityH2H.SetMobilityModel ("ns3::RandomWaypointMobilityModel", ////////// da modificare
+     //                           "Speed", StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"),
+     //                           "Pause" ,StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"),
+     //                           "PositionAllocator", positionAlloc1)
+     //                          );
+     // mobilityH2H.SetPositionAllocator (positionAlloc1);
+
+
+   mobilityH2H.SetPositionAllocator ("ns3::RandomDiscPositionAllocator",
                                  "X", StringValue ("100.0"),
                                  "Y", StringValue ("100.0"),
                                  "Rho", StringValue ("ns3::UniformRandomVariable[Min=0|Max=30]"));
@@ -147,7 +174,12 @@ main (int argc, char *argv[])
                              "Time", StringValue ("2s"),
                              "Speed", StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"),
                              "Bounds", StringValue ("0|200|0|200"));
+  
   mobilityH2H.Install (ueNodesH2H);
+
+
+
+
 
   //mobilità per gli M2M dinamici con random walk e posizione iniziale causale
   MobilityHelper mobilityM2MMobile;
@@ -195,13 +227,15 @@ main (int argc, char *argv[])
   // Activate an EPS bearer on all UEs
   // qui dipende tutto dal tipo di servizio
   // per comunicazioni H2H metto tipologia conversazione vocale
-  for (uint32_t u = 0; u < ueNodes.GetN()-ueNodesM2MFixed.GetN()-ueNodesM2MMobile.GetN(); ++u)
+  uint32_t numb_ueH2H = ueNodes.GetN()-ueNodesM2MFixed.GetN()-ueNodesM2MMobile.GetN();
+  for (uint32_t u = 0; u < numb_ueH2H; ++u)
     {
+       
       //in questo caso il bit rate garantito è anche quello massimo: bit rate costante
       Ptr<NetDevice> ueDevice = ueLteDevs.Get (u);
       GbrQosInformation qos;  //Guaranteed Bit Rate: vedi 3GPP TS 36.143 9.2.1.18 GBR QoS Information
       qos.gbrDl = 132;  // bit/s, considering IP, UDP, RLC, PDCP header size
-      qos.gbrUl = 132;
+      qos.gbrUl = 132;// garanted bitrate in uplink
       qos.mbrDl = qos.gbrDl;   //massimo bit rate in download
       qos.mbrUl = qos.gbrUl;   //massimo bit rate in upload
 
@@ -209,10 +243,49 @@ main (int argc, char *argv[])
       EpsBearer bearer (q, qos);
       bearer.arp.priorityLevel = 15-u; //va da 1 a 15; 1 è il piu alto (15 - (u + 1);)
                                        //quindi ho una priorità crescente per ogni conversazione vocale 
+        
+
       bearer.arp.preemptionCapability = true;
       bearer.arp.preemptionVulnerability = true;
       lteHelper->ActivateDedicatedEpsBearer (ueDevice, bearer, EpcTft::Default ());
-    }
+         //CIP
+         // video
+      GbrQosInformation qos_video;  //Guaranteed Bit Rate: vedi 3GPP TS 36.143 9.2.1.18 GBR QoS Information
+      qos_video.gbrDl = 24000;  // bit/s, considering IP, UDP, RLC, PDCP header size
+      qos_video.gbrUl = 300;// garanted bitrate in uplink
+      qos_video.mbrDl = qos_video.gbrDl;   //massimo bit rate in download
+      qos_video.mbrUl = qos_video.gbrUl;   //massimo bit rate in upload
+
+      enum EpsBearer::Qci qvideo = EpsBearer::GBR_CONV_VIDEO ;  //qci=Qos Class indication
+      EpsBearer bearer_video (qvideo, qos_video);
+      bearer_video.arp.priorityLevel = 15-u; //va da 1 a 15; 1 è il piu alto (15 - (u + 1);)
+                                       //quindi ho una priorità crescente per ogni conversazione vocale 
+        
+
+      bearer_video.arp.preemptionCapability = true;
+      bearer_video.arp.preemptionVulnerability = true;
+      lteHelper->ActivateDedicatedEpsBearer (ueDevice, bearer_video, EpcTft::Default ());
+  
+
+      GbrQosInformation qos_gaming;  //Guaranteed Bit Rate: vedi 3GPP TS 36.143 9.2.1.18 GBR QoS Information
+      qos_gaming.gbrDl = 24000;  // bit/s, considering IP, UDP, RLC, PDCP header size, da verificare sul 3gpp
+      qos_gaming.gbrUl = 300;// garanted bitrate in uplink,da verificare 
+      qos_gaming.mbrDl = qos_video.gbrDl;   //massimo bit rate in download
+      qos_gaming.mbrUl = qos_video.gbrUl;   //massimo bit rate in upload
+
+      enum EpsBearer::Qci qgaming = EpsBearer::GBR_GAMING  ;   //qci=Qos Class indication
+      EpsBearer bearer_gaming (qgaming, qos_gaming);
+      bearer_gaming.arp.priorityLevel = 15-u; //va da 1 a 15; 1 è il piu alto (15 - (u + 1);)
+                                       //quindi ho una priorità crescente per ogni conversazione vocale 
+        
+
+      bearer_gaming.arp.preemptionCapability = true;
+      bearer_gaming.arp.preemptionVulnerability = true;
+      lteHelper->ActivateDedicatedEpsBearer (ueDevice, bearer_gaming, EpcTft::Default ());
+     
+     }
+
+
 
   // per comunicazioni M2M metto tipologia conversazione vocale IN ATTESA DI ALTRE TIPOLOGIE
   for (uint32_t u = ueNodes.GetN()-ueNodesM2MFixed.GetN()-ueNodesM2MMobile.GetN() ; u < ueNodes.GetN(); ++u)
@@ -225,7 +298,7 @@ main (int argc, char *argv[])
       qos.mbrUl = qos.gbrUl;   //massimo bit rate in upload
 
       enum EpsBearer::Qci q = EpsBearer::GBR_CONV_VOICE;   //qci=Qos Class indication
-      EpsBearer bearer (q, qos);
+      EpsBearer bearer (q, qos);//comunicazione tra U-tran e  SGW 
       bearer.arp.priorityLevel = 15-u; //va da 1 a 15; 1 è il piu alto (15 - (u + 1);)
                                        //quindi ho una priorità crescente per ogni comunicazione;
                                        //inoltre la priorità è maggiore rispetto a quella per conversazioni vocali
@@ -233,29 +306,39 @@ main (int argc, char *argv[])
       bearer.arp.preemptionVulnerability = true;
       lteHelper->ActivateDedicatedEpsBearer (ueDevice, bearer, EpcTft::Default ());
     }
-    
+  
   // Install and start applications on UEs and remote host
+    //CIP
+    // ci sono 3 porte che ogni utente a livello di trasporto: 
+       // -dlPort=> la porta che ogni utente utilizza per comunicare con remoteHost,  
+       // -ulPort=> la porta che il remoteHost usa per comunicare con ogni utente,
+       // -otherPort=> porta che utilizza l'utente per comunicare con gli altri utenti 
   uint16_t dlPort = 1234;
   uint16_t ulPort = 2000;
   uint16_t otherPort = 3000;
   ApplicationContainer clientApps;
   ApplicationContainer serverApps;
+  // per ogni nodo_utente crea 3 PacketSinkHelper:
+  //                 
+  //                                      
   for (uint32_t u = 0; u < ueNodes.GetN (); ++u)
     {
       ++ulPort;
       ++otherPort;
-      PacketSinkHelper dlPacketSinkHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), dlPort));
+       //packetSinkHelper object correspond to a socket and its management
+      PacketSinkHelper dlPacketSinkHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), dlPort));// 
       PacketSinkHelper ulPacketSinkHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), ulPort));
       PacketSinkHelper packetSinkHelper ("ns3::UdpSocketFactory", InetSocketAddress (Ipv4Address::GetAny (), otherPort));
-      serverApps.Add (dlPacketSinkHelper.Install (ueNodes.Get (u)));
+      serverApps.Add (dlPacketSinkHelper.Install (ueNodes.Get (u))); // il metodo install installa sulL' utente una PacketSinkapplication; ritora un puntatore all applicazione
       serverApps.Add (ulPacketSinkHelper.Install (remoteHost));
       serverApps.Add (packetSinkHelper.Install (ueNodes.Get (u)));
-
+       // vengono settati i client : 
+        
       UdpClientHelper dlClient (ueIpIface.GetAddress (u), dlPort);
       dlClient.SetAttribute ("Interval", TimeValue (MilliSeconds (interPacketInterval)));
       dlClient.SetAttribute ("MaxPackets", UintegerValue (1000000));
 
-      UdpClientHelper ulClient (remoteHostAddr, ulPort);
+      UdpClientHelper ulClient (remoteHostAddr, ulPort);    
       ulClient.SetAttribute ("Interval", TimeValue (MilliSeconds (interPacketInterval)));
       ulClient.SetAttribute ("MaxPackets", UintegerValue (1000000));
 
@@ -290,6 +373,16 @@ main (int argc, char *argv[])
   Ptr<NetDevice> ueDevice = ueLteDevs.Get (0);
   Ptr<NetDevice> enbDevice = enbLteDevs.Get (0);
 
+
+   //cip
+  // ottenere i nodi connessi, POSSIBILE CODICE PER VEDERE I NODI CONNESSI ALL ENB, BISOGNA IMPLEENTARE IL TRACE
+  // Ptr<Node> enb = enbNodes.Get(0);
+  
+  // Ptr<LteEnbNetDevice> enbLteDevice = enbDevice->GetObject<LteEnbNetDevice>();
+  //Ptr<LteEnbRrc> enbRrc = enbLteDevice->GetRrc();
+  //Ptr<UeManager> ueManager = enbRrc->GetUeManager(1); // rnti is 1
+
+
   //std::cout << ueLteDevs.GetN() << "\n";
   NS_LOG_UNCOND("Il numero di dispositivi connessi alla fine è: " << ueLteDevs.GetN() << "\n");
 
@@ -303,7 +396,7 @@ main (int argc, char *argv[])
 
   //stop simulation after 3 seconds
   Simulator::Stop (Seconds (3.0));
-
+  
   Simulator::Run ();
   /*GtkConfigStore config;
   config.ConfigureAttributes();*/

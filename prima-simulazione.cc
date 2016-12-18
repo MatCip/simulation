@@ -248,30 +248,34 @@ main (int argc, char *argv[])
       bearer.arp.preemptionCapability = true;
       bearer.arp.preemptionVulnerability = true;
       lteHelper->ActivateDedicatedEpsBearer (ueDevice, bearer, EpcTft::Default ());
-         //CIP
-         // video
-      GbrQosInformation qos_video;  //Guaranteed Bit Rate: vedi 3GPP TS 36.143 9.2.1.18 GBR QoS Information
-      qos_video.gbrDl = 24000;  // bit/s, considering IP, UDP, RLC, PDCP header size
-      qos_video.gbrUl = 300;// garanted bitrate in uplink
-      qos_video.mbrDl = qos_video.gbrDl;   //massimo bit rate in download
-      qos_video.mbrUl = qos_video.gbrUl;   //massimo bit rate in upload
 
-      enum EpsBearer::Qci qvideo = EpsBearer::GBR_CONV_VIDEO ;  //qci=Qos Class indication
+
+
+         //CIP
+       //UPLINK E IL DOWNLINK DI VIDEO E GAMING DEVONO ESSERE VERIFICATI IN UN 3GPP, NON HO TROVATO NESSUNA INFORMAZIONE
+        // IN TS 36.143 9.2.1.18 SOPRA CITATO
+         // video
+      GbrQosInformation qos_video;  
+      qos_video.gbrDl = 24000;  
+      qos_video.gbrUl = 300;
+      qos_video.mbrDl = qos_video.gbrDl;   
+      qos_video.mbrUl = qos_video.gbrUl;   
+
+      enum EpsBearer::Qci qvideo = EpsBearer::GBR_CONV_VIDEO ;  
       EpsBearer bearer_video (qvideo, qos_video);
-      bearer_video.arp.priorityLevel = 15-u; //va da 1 a 15; 1 è il piu alto (15 - (u + 1);)
-                                       //quindi ho una priorità crescente per ogni conversazione vocale 
-        
+      bearer_video.arp.priorityLevel = 15-u; 
 
       bearer_video.arp.preemptionCapability = true;
       bearer_video.arp.preemptionVulnerability = true;
       lteHelper->ActivateDedicatedEpsBearer (ueDevice, bearer_video, EpcTft::Default ());
   
-
-      GbrQosInformation qos_gaming;  //Guaranteed Bit Rate: vedi 3GPP TS 36.143 9.2.1.18 GBR QoS Information
-      qos_gaming.gbrDl = 24000;  // bit/s, considering IP, UDP, RLC, PDCP header size, da verificare sul 3gpp
-      qos_gaming.gbrUl = 300;// garanted bitrate in uplink,da verificare 
-      qos_gaming.mbrDl = qos_video.gbrDl;   //massimo bit rate in download
-      qos_gaming.mbrUl = qos_video.gbrUl;   //massimo bit rate in upload
+      //CIP
+      // GAMING
+      GbrQosInformation qos_gaming;  
+      qos_gaming.gbrDl = 24000;  
+      qos_gaming.gbrUl = 300;        
+      qos_gaming.mbrDl = qos_video.gbrDl;   
+      qos_gaming.mbrUl = qos_video.gbrUl;  
 
       enum EpsBearer::Qci qgaming = EpsBearer::GBR_GAMING  ;   //qci=Qos Class indication
       EpsBearer bearer_gaming (qgaming, qos_gaming);
@@ -318,6 +322,9 @@ main (int argc, char *argv[])
   uint16_t otherPort = 3000;
   ApplicationContainer clientApps;
   ApplicationContainer serverApps;
+
+
+  
   // per ogni nodo_utente crea 3 PacketSinkHelper:
   //                 
   //                                      
